@@ -11,6 +11,7 @@ import Loader from "../shared/Loader";
 
 const UserTable = () => {
   const [usersList, setUserList] = useState([]);
+  const [checkAll, setCheckAll] = useState(false);
   const [selectedItemsId, setSelectedItemsId] = useState([]);
   const [ageRange, setAgeRange] = useState({
     from: 0,
@@ -57,10 +58,22 @@ const UserTable = () => {
     }
   }, [totalPages, rows, currentPage]);
 
+  useEffect(() => {
+    if (usersList.length && selectedItemsId.length === usersList.length) {
+      setCheckAll(true);
+    } else {
+      setCheckAll(false);
+    }
+  }, [selectedItemsId.length, usersList.length]);
+
   const handleBulkChange = (e) => {
     if (e.target.checked) {
       if (e.target.value === "all") {
-        setSelectedItemsId(usersList?.map((user) => user?._id));
+        setSelectedItemsId(
+          usersList
+            ?.slice((currentPage - 1) * rows, (currentPage - 1) * rows + rows)
+            .map((user) => user?._id)
+        );
       } else {
         setSelectedItemsId((p) => [...p, e.target.value]);
       }
@@ -81,6 +94,20 @@ const UserTable = () => {
 
     if (errorMessage) {
       alert(errorMessage);
+    } else {
+      setUserList((users) =>
+        users.map((u) => {
+          for (let i = 0; i < selectedItemsId.length; i++) {
+            if (selectedItemsId[i] === u?._id) {
+              return { ...u, status: "blocked" };
+            }
+          }
+          return u;
+        })
+      );
+
+      setSelectedItemsId([]);
+      setCheckAll(false);
     }
   };
 
@@ -92,6 +119,19 @@ const UserTable = () => {
 
     if (errorMessage) {
       alert(errorMessage);
+    } else {
+      setUserList((users) =>
+        users.map((u) => {
+          for (let i = 0; i < selectedItemsId.length; i++) {
+            if (selectedItemsId[i] === u?._id) {
+              return { ...u, status: "normal" };
+            }
+          }
+          return u;
+        })
+      );
+      setSelectedItemsId([]);
+      setCheckAll(false);
     }
   };
 
@@ -228,7 +268,13 @@ const UserTable = () => {
               <tr>
                 <th>
                   <label>
-                    <input type="checkbox" className="checkbox" value={"all"} />
+                    <input
+                      type="checkbox"
+                      className="checkbox"
+                      value={"all"}
+                      checked={checkAll}
+                      onChange={(e) => setCheckAll(e.target.checked)}
+                    />
                   </label>
                 </th>
                 <th>Name</th>
