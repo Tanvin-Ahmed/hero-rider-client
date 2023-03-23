@@ -1,19 +1,30 @@
 import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { userInfoContext } from "../context/UserInfo";
-import { profileData } from "../utils/data";
 import avatar from "../assets/avatar.png";
 import { Image } from "cloudinary-react";
+import { getOrders } from "../apis/order";
+import PackageCard from "../components/package/PackageCard";
+import { packages } from "../utils/data";
 
 const Profile = () => {
   const { register } = useForm();
   const { userInfo } = useContext(userInfoContext);
 
-  const [profileInfo, setProfileInfo] = useState({});
+  const [purchasedCourses, setPurchasedCourses] = useState([]);
 
   useEffect(() => {
-    setProfileInfo(profileData);
-  }, []);
+    if (!userInfo) return;
+
+    const get = async () => {
+      const { orders: courses } = await getOrders(userInfo?._id);
+      setPurchasedCourses(courses);
+    };
+
+    get();
+  }, [userInfo]);
+
+  console.log(purchasedCourses);
 
   return (
     <div className="container mx-auto px-4">
@@ -29,6 +40,7 @@ const Profile = () => {
                 <Image
                   cloudName={process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}
                   publicId={userInfo?.profile}
+                  className="h-24 w-24 rounded-full object-cover my-3"
                 />
               ) : (
                 <img
@@ -144,6 +156,16 @@ const Profile = () => {
                   </label>
                 </>
               )}
+              <label className="flex flex-col justify-center gap-y-2 mt-4">
+                My Courses:
+                {purchasedCourses?.map((course) => (
+                  <PackageCard
+                    profile
+                    data={packages[course?.packageId]}
+                    key={course?._id}
+                  />
+                ))}
+              </label>
             </div>
           </fieldset>
           {userInfo?.role !== "admin" && (

@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getUserCount,
+  getUserCountByEmail,
   getUsersInfo,
+  searchByEmail,
   updateUsersStatus,
 } from "../../apis/usersAPI";
 import Pagination from "../shared/Pagination";
@@ -17,13 +19,12 @@ const UserTable = () => {
     from: 0,
     to: 0,
   });
-  const [searchText, setSearchText] = useState(null);
+  const [searchText, setSearchText] = useState("");
 
   const [totalPages, setTotalPages] = useState(0);
-  const [rows] = useState(10);
+  const [rows] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const pageTrackerRef = useRef(1);
 
   useEffect(() => {
     const get = async () => {
@@ -31,32 +32,29 @@ const UserTable = () => {
       const { count } = await getUserCount();
       if (count) {
         setTotalPages(Math.ceil(count / rows));
+        const { data, errorMessage } = await getUsersInfo(rows, 1);
+        if (errorMessage) {
+          alert(errorMessage);
+        } else {
+          setUserList(data);
+        }
       }
       setLoading(false);
     };
-
     get();
   }, [rows]);
 
-  useEffect(() => {
-    if (!totalPages) return;
-
-    const get = async () => {
-      setLoading(true);
+  const handlePageChange = async (currentPage) => {
+    if (searchText.trim()) {
+    } else {
       const { data, errorMessage } = await getUsersInfo(rows, currentPage);
       if (errorMessage) {
         alert(errorMessage);
       } else {
         setUserList((users) => [...users, ...data]);
       }
-      setLoading(false);
-    };
-
-    if (pageTrackerRef.current <= currentPage) {
-      get();
-      pageTrackerRef.current++;
     }
-  }, [totalPages, rows, currentPage]);
+  };
 
   useEffect(() => {
     if (usersList.length && selectedItemsId.length === usersList.length) {
@@ -135,20 +133,33 @@ const UserTable = () => {
     }
   };
 
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isNaN(selectedItemsId)) {
+    setCurrentPage(1);
+    if (!isNaN(searchText)) {
       // phone number
     } else {
       if (
-        String(selectedItemsId)
+        String(searchText)
           .toLowerCase()
           .match(
             /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
           )
       ) {
         //   search by email
+        const { count } = await getUserCountByEmail(searchText);
+        const totalPage = Math.ceil(count / rows);
+        setTotalPages(totalPage);
+        if (totalPage) {
+          const { data, errorMessage } = await searchByEmail({
+            email: searchText,
+            limit: rows,
+            page: 1,
+          });
+          if (errorMessage) return alert(errorMessage);
+          setUserList(data);
+        }
       } else {
         //   search by full name
       }
@@ -280,6 +291,7 @@ const UserTable = () => {
                 <th>Name</th>
                 <th>Phone</th>
                 <th>Email</th>
+                <th>Age</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -334,6 +346,7 @@ const UserTable = () => {
                     </td>
                     <td>{user?.phone}</td>
                     <td>{user?.email}</td>
+                    <td>{user?.age}</td>
                     <td>
                       <div
                         className={`badge badge-ghost badge-sm text-sm font-medium ${
@@ -359,6 +372,7 @@ const UserTable = () => {
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           totalPage={totalPages}
+          handlePageChange={handlePageChange}
         />
       )}
     </>

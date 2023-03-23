@@ -4,6 +4,7 @@ import Admin from "../pages/Admin";
 import Authentication from "../pages/Authentication";
 import Home from "../pages/Home";
 import Packages from "../pages/Packages";
+import Payment from "../pages/Payment";
 import Profile from "../pages/Profile";
 import PrivateRoute from "./PrivateRoute";
 
@@ -57,16 +58,29 @@ const Routers = () => {
             </PrivateRoute>
           }
         />
-        <Route
-          path="packages"
-          element={
-            <PrivateRoute>
-              <Layout>
-                <Packages />
-              </Layout>
-            </PrivateRoute>
-          }
-        />
+        <Route path="packages">
+          <Route
+            index
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <Packages />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="single/:id"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <Payment />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+        </Route>
       </Route>
     </Routes>
   );

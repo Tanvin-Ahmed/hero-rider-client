@@ -1,9 +1,16 @@
-const Pagination = ({ setCurrentPage, currentPage, totalPage }) => {
+const Pagination = ({
+  setCurrentPage,
+  currentPage,
+  totalPage,
+  handlePageChange,
+}) => {
   const handlePageIncrease = () => {
+    handlePageChange(currentPage + 1);
     setCurrentPage((p) => p + 1);
   };
 
   const handlePageDecrease = () => {
+    handlePageChange(currentPage - 1);
     setCurrentPage((p) => p - 1);
   };
 

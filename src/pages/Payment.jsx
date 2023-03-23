@@ -7,7 +7,7 @@ const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 const Payment = () => {
   return (
     <div className="container mx-auto px-4">
-      <div className="flex justify-center items-center h-screen overflow-auto">
+      <div className="flex justify-center items-center py-10">
         <Elements stripe={stripePromise}>
           <CheckoutForm />
         </Elements>
