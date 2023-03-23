@@ -28,7 +28,7 @@ const UserTable = () => {
   const [searchText, setSearchText] = useState("");
 
   const [totalPages, setTotalPages] = useState(0);
-  const [rows] = useState(1);
+  const [rows] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
