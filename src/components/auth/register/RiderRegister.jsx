@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { uploadImgInCloudinary } from "../../../apis/imageAPI";
 import { registerUser } from "../../../apis/usersAPI";
 import { userInfoContext } from "../../../context/UserInfo";
@@ -8,6 +9,7 @@ import { compressImage } from "../../../utils/imageHandler/compressImage";
 import Loader from "../../shared/Loader";
 
 const RiderRegister = () => {
+  const navigate = useNavigate();
   const { setUserInfo } = useContext(userInfoContext);
   const [loading, setLoading] = useState(false);
 
@@ -77,6 +79,7 @@ const RiderRegister = () => {
       await registerUser(newInfo);
 
       setUserInfo(getUserInfo());
+      navigate("/profile");
       setLoading(false);
     } catch (error) {
       alert(error.message);

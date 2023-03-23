@@ -13,8 +13,6 @@ const UserInfo = ({ children }) => {
     }
   }, []);
 
-  console.log(userInfo);
-
   const values = { userInfo, setUserInfo };
 
   return (

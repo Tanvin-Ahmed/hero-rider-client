@@ -4,10 +4,6 @@ function App() {
   return (
     <div>
       <Routers />
-      {/* <Packages /> */}
-      {/* <Payment /> */}
-      {/* <Admin /> */}
-      {/* <NavBar /> */}
     </div>
   );
 }

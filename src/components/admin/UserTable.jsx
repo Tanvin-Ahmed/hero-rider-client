@@ -1,9 +1,16 @@
-import { useState } from "react";
-import { userList } from "../../utils/data";
+import { useEffect, useRef, useState } from "react";
+import {
+  getUserCount,
+  getUsersInfo,
+  updateUsersStatus,
+} from "../../apis/usersAPI";
 import Pagination from "../shared/Pagination";
+import { Image } from "cloudinary-react";
+import avatar from "../../assets/avatar.png";
+import Loader from "../shared/Loader";
 
 const UserTable = () => {
-  const [usersData] = useState(userList || []);
+  const [usersList, setUserList] = useState([]);
   const [selectedItemsId, setSelectedItemsId] = useState([]);
   const [ageRange, setAgeRange] = useState({
     from: 0,
@@ -11,10 +18,49 @@ const UserTable = () => {
   });
   const [searchText, setSearchText] = useState(null);
 
+  const [totalPages, setTotalPages] = useState(0);
+  const [rows] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const pageTrackerRef = useRef(1);
+
+  useEffect(() => {
+    const get = async () => {
+      setLoading(true);
+      const { count } = await getUserCount();
+      if (count) {
+        setTotalPages(Math.ceil(count / rows));
+      }
+      setLoading(false);
+    };
+
+    get();
+  }, [rows]);
+
+  useEffect(() => {
+    if (!totalPages) return;
+
+    const get = async () => {
+      setLoading(true);
+      const { data, errorMessage } = await getUsersInfo(rows, currentPage);
+      if (errorMessage) {
+        alert(errorMessage);
+      } else {
+        setUserList((users) => [...users, ...data]);
+      }
+      setLoading(false);
+    };
+
+    if (pageTrackerRef.current <= currentPage) {
+      get();
+      pageTrackerRef.current++;
+    }
+  }, [totalPages, rows, currentPage]);
+
   const handleBulkChange = (e) => {
     if (e.target.checked) {
       if (e.target.value === "all") {
-        setSelectedItemsId(usersData?.map((user) => user?._id));
+        setSelectedItemsId(usersList?.map((user) => user?._id));
       } else {
         setSelectedItemsId((p) => [...p, e.target.value]);
       }
@@ -24,6 +70,28 @@ const UserTable = () => {
       } else {
         setSelectedItemsId((p) => p.filter((id) => id !== e.target.value));
       }
+    }
+  };
+
+  const handleBlockBlock = async () => {
+    const { errorMessage } = await updateUsersStatus({
+      _ids: selectedItemsId,
+      status: "blocked",
+    });
+
+    if (errorMessage) {
+      alert(errorMessage);
+    }
+  };
+
+  const handleUnblockBlock = async () => {
+    const { errorMessage } = await updateUsersStatus({
+      _ids: selectedItemsId,
+      status: "normal",
+    });
+
+    if (errorMessage) {
+      alert(errorMessage);
     }
   };
 
@@ -50,8 +118,6 @@ const UserTable = () => {
   const handleSearchByAge = (e) => {
     e.preventDefault();
   };
-
-  const handleBlock = () => {};
 
   return (
     <>
@@ -139,84 +205,116 @@ const UserTable = () => {
       <div className="overflow-x-auto w-full mt-6">
         <h1 className="text-[25px] text-center">Users List</h1>
         {!!selectedItemsId.length && (
-          <button
-            className="my-4 text-white font-bold py-2 px-4 rounded-r bg-red-600 hover:bg-red-700"
-            onClick={handleBlock}
-          >
-            Block selected users
-          </button>
+          <div className="flex gap-4">
+            <button
+              className="my-4 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700"
+              onClick={handleBlockBlock}
+            >
+              Block
+            </button>
+            <button
+              className="my-4 text-white font-bold py-2 px-4 rounded bg-purple-600 hover:bg-purple-700"
+              onClick={handleUnblockBlock}
+            >
+              Unblock
+            </button>
+          </div>
         )}
-        <table className="table w-full" onChange={handleBulkChange}>
-          <thead>
-            <tr>
-              <th>
-                <label>
-                  <input type="checkbox" className="checkbox" value={"all"} />
-                </label>
-              </th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {usersData.map((user) => (
-              <tr key={user?._id}>
+        {loading ? (
+          <Loader />
+        ) : (
+          <table className="table w-full" onChange={handleBulkChange}>
+            <thead>
+              <tr>
                 <th>
                   <label>
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      value={user?._id}
-                      checked={selectedItemsId.find((u) => u === user?._id)}
-                    />
+                    <input type="checkbox" className="checkbox" value={"all"} />
                   </label>
                 </th>
-                <td>
-                  <div className="flex items-center space-x-3">
-                    <div className="avatar">
-                      <div className="mask mask-squircle w-12 h-12">
-                        <img src={user?.profile} alt={user?.fullName} />
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {usersList
+                .slice(
+                  (currentPage - 1) * rows,
+                  (currentPage - 1) * rows + rows
+                )
+                .map((user) => (
+                  <tr key={user?._id}>
+                    <th>
+                      <label>
+                        <input
+                          type="checkbox"
+                          className="checkbox"
+                          value={user?._id}
+                          checked={selectedItemsId.find((u) => u === user?._id)}
+                        />
+                      </label>
+                    </th>
+                    <td>
+                      <div className="flex items-center space-x-3">
+                        <div className="avatar">
+                          <div className="mask mask-squircle w-12 h-12">
+                            {user?.profile ? (
+                              <Image
+                                cloudName={
+                                  process.env.REACT_APP_CLOUDINARY_CLOUD_NAME
+                                }
+                                publicId={user?.profile}
+                              />
+                            ) : (
+                              <img src={avatar} alt={user?.fullName} />
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-bold">{user?.fullName}</div>
+                          <div
+                            className={`badge badge-ghost badge-sm text-sm font-medium ${
+                              user?.role === "rider"
+                                ? "dark:bg-green-900 dark:text-green-300"
+                                : "dark:bg-purple-900 dark:text-purple-300"
+                            }`}
+                          >
+                            {user?.role}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="font-bold">{user?.fullName}</div>
+                    </td>
+                    <td>{user?.phone}</td>
+                    <td>{user?.email}</td>
+                    <td>
                       <div
                         className={`badge badge-ghost badge-sm text-sm font-medium ${
-                          user?.role === "rider"
-                            ? "dark:bg-green-900 dark:text-green-300"
-                            : "dark:bg-purple-900 dark:text-purple-300"
+                          user?.status === "normal"
+                            ? "dark:bg-blue-900 dark:text-blue-300"
+                            : "dark:bg-red-900 dark:text-red-300"
                         }`}
                       >
-                        {user?.role}
+                        {user?.status}
                       </div>
-                    </div>
-                  </div>
-                </td>
-                <td>{user?.phone}</td>
-                <td>{user?.email}</td>
-                <td>
-                  <div
-                    className={`badge badge-ghost badge-sm text-sm font-medium ${
-                      user?.status === "normal"
-                        ? "dark:bg-blue-900 dark:text-blue-300"
-                        : "dark:bg-red-900 dark:text-red-300"
-                    }`}
-                  >
-                    {user?.status}
-                  </div>
-                </td>
-                <th>
-                  <button className="btn btn-ghost btn-xs">details</button>
-                </th>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <Pagination />
+                    </td>
+                    <th>
+                      <button className="btn btn-ghost btn-xs">details</button>
+                    </th>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        )}
       </div>
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          totalPage={totalPages}
+        />
+      )}
     </>
   );
 };

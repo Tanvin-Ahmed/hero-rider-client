@@ -1,7 +1,9 @@
 import { Route, Routes } from "react-router-dom";
 import NavBar from "../components/shared/NavBar";
+import Admin from "../pages/Admin";
 import Authentication from "../pages/Authentication";
 import Home from "../pages/Home";
+import Packages from "../pages/Packages";
 import Profile from "../pages/Profile";
 import PrivateRoute from "./PrivateRoute";
 
@@ -35,11 +37,32 @@ const Routers = () => {
           }
         />
         <Route
-          path="profile/:id"
+          path="profile"
           element={
             <PrivateRoute>
               <Layout>
                 <Profile />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="admin"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <Admin />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="packages"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <Packages />
               </Layout>
             </PrivateRoute>
           }

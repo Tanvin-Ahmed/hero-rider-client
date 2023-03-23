@@ -1,4 +1,8 @@
+import { useContext } from "react";
+import { userInfoContext } from "../context/UserInfo";
+
 const Home = () => {
+  const { userInfo } = useContext(userInfoContext);
   return (
     <div className="home-page">
       <div className="cover">
@@ -13,11 +17,13 @@ const Home = () => {
             blanditiis repellat culpa. Nihil cum quis praesentium atque illum
             labore, in deleniti similique, doloremque deserunt dolores.
           </p>
-          <div className="my-4">
-            <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
-              Login
-            </button>
-          </div>
+          {!userInfo && (
+            <div className="my-4">
+              <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+                Login
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
