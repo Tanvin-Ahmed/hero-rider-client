@@ -200,7 +200,7 @@ const UserTable = () => {
                 <td>
                   <div
                     className={`badge badge-ghost badge-sm text-sm font-medium ${
-                      user?.status === "Normal"
+                      user?.status === "normal"
                         ? "dark:bg-blue-900 dark:text-blue-300"
                         : "dark:bg-red-900 dark:text-red-300"
                     }`}

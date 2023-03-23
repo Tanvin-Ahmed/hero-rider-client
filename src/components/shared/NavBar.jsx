@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const NavBar = () => {
   return (
-    <div className="navbar sticky top-0 bg-purple-900">
+    <div className="navbar sticky top-0 bg-purple-900 z-50">
       <div className="flex-1">
         <Link to={"/"} className="btn btn-ghost normal-case text-xl">
           Hero Rider

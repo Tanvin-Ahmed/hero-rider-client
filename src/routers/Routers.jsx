@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import NavBar from "../components/shared/NavBar";
+import Authentication from "../pages/Authentication";
 import Home from "../pages/Home";
 import Profile from "../pages/Profile";
 import PrivateRoute from "./PrivateRoute";
@@ -22,6 +23,14 @@ const Routers = () => {
           element={
             <Layout>
               <Home />
+            </Layout>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <Layout>
+              <Authentication />
             </Layout>
           }
         />

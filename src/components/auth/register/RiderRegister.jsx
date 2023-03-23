@@ -1,12 +1,88 @@
+import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
+import { uploadImgInCloudinary } from "../../../apis/imageAPI";
+import { registerUser } from "../../../apis/usersAPI";
+import { userInfoContext } from "../../../context/UserInfo";
+import { getUserInfo } from "../../../utils/auth/getUserInfo";
+import { compressImage } from "../../../utils/imageHandler/compressImage";
+import Loader from "../../shared/Loader";
 
 const RiderRegister = () => {
+  const { setUserInfo } = useContext(userInfoContext);
+  const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const onSubmit = (data) => console.log(data);
+
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
+
+      if (data.password.trim() !== data.confirmPassword.trim()) {
+        setLoading(false);
+        alert("Passwords do not match!");
+      }
+
+      const { profile, drivingLicense, nid, ...info } = data;
+
+      const { compressedImage: profileImg, errorMessage: profileError } =
+        await compressImage(data.profile[0]);
+
+      const {
+        compressedImage: drivingLicenseImg,
+        errorMessage: drivingLicenseError,
+      } = await compressImage(data.drivingLicense[0]);
+
+      const { compressedImage: nidImg, errorMessage: nidError } =
+        await compressImage(data.nid[0]);
+
+      if (profileError || drivingLicenseError || nidError) {
+        setLoading(false);
+        return alert("file not compressed");
+      }
+
+      const { data: profileImgData, errorMessage: e1 } =
+        await uploadImgInCloudinary(profileImg);
+      if (e1) {
+        setLoading(false);
+        return alert(e1);
+      }
+
+      const { data: drivingLicenseImgData, errorMessage: e2 } =
+        await uploadImgInCloudinary(drivingLicenseImg);
+      if (e2) {
+        setLoading(false);
+        return alert(e2);
+      }
+
+      const { data: nidImgData, errorMessage: e3 } =
+        await uploadImgInCloudinary(nidImg);
+      if (e3) {
+        setLoading(false);
+        return alert(e3);
+      }
+
+      const newInfo = {
+        ...info,
+        profile: profileImgData,
+        drivingLicense: drivingLicenseImgData,
+        nid: nidImgData,
+        role: "rider",
+        status: "normal",
+      };
+
+      await registerUser(newInfo);
+
+      setUserInfo(getUserInfo());
+      setLoading(false);
+    } catch (error) {
+      alert(error.message);
+      setLoading(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -21,6 +97,20 @@ const RiderRegister = () => {
             {...register("fullName", { required: true })}
           />
           {errors.fullName && (
+            <span className="text-red-600">This field is required</span>
+          )}
+        </label>
+
+        <label className="flex flex-col justify-center gap-y-2 mt-4">
+          Profile photo:
+          <input
+            type="file"
+            placeholder="Enter your img"
+            className="rounded px-3 py-2 w-full outline-none placeholder:text-[14px]"
+            {...register("profile", { required: true })}
+            accept="image/*"
+          />
+          {errors.profile && (
             <span className="text-red-600">This field is required</span>
           )}
         </label>
@@ -68,7 +158,7 @@ const RiderRegister = () => {
         <label className="flex flex-col justify-center gap-y-2 mt-4">
           Age:
           <input
-            type="date"
+            type="text"
             placeholder="Enter your age"
             className="rounded px-3 py-2 w-full outline-none placeholder:text-[14px]"
             {...register("age", { required: true })}
@@ -96,7 +186,7 @@ const RiderRegister = () => {
         <label className="flex flex-col justify-center gap-y-2 mt-4">
           Phone Number:
           <input
-            type="number"
+            type="text"
             placeholder="Enter your phone number"
             className="rounded px-3 py-2 w-full outline-none placeholder:text-[14px]"
             {...register("phone", { required: true })}
@@ -113,6 +203,7 @@ const RiderRegister = () => {
             placeholder="driving license photo"
             className="rounded px-3 py-2 w-full outline-none placeholder:text-[14px]"
             {...register("drivingLicense", { required: true })}
+            accept="image/*"
           />
           {errors.drivingLicense && (
             <span className="text-red-600">This field is required</span>
@@ -139,21 +230,9 @@ const RiderRegister = () => {
             placeholder="NID photo"
             className="rounded px-3 py-2 w-full outline-none placeholder:text-[14px]"
             {...register("nid", { required: true })}
+            accept="image/*"
           />
           {errors.nid && (
-            <span className="text-red-600">This field is required</span>
-          )}
-        </label>
-
-        <label className="flex flex-col justify-center gap-y-2 mt-4">
-          Profile photo:
-          <input
-            type="file"
-            placeholder="Enter your img"
-            className="rounded px-3 py-2 w-full outline-none placeholder:text-[14px]"
-            {...register("profile", { required: true })}
-          />
-          {errors.profile && (
             <span className="text-red-600">This field is required</span>
           )}
         </label>
@@ -219,10 +298,16 @@ const RiderRegister = () => {
         <button
           type="submit"
           className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+          disabled={loading}
         >
           Register
         </button>
       </div>
+      {loading && (
+        <div className="my-4">
+          <Loader />
+        </div>
+      )}
     </form>
   );
 };

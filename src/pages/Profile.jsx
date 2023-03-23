@@ -164,10 +164,13 @@ const Profile = () => {
 
               <label className="flex flex-col justify-center gap-y-2 mt-4">
                 Name Palate:
-                <img
-                  src={profileInfo.namePalate}
-                  alt="driving license"
-                  className="w-full h-full rounded"
+                <input
+                  defaultValue={profileInfo?.namePalate}
+                  type="text"
+                  placeholder="Enter car model"
+                  className="rounded px-3 py-2 w-full outline-none placeholder:text-[14px]"
+                  {...register("vehicleType", { required: true })}
+                  disabled
                 />
               </label>
             </div>
