@@ -4,6 +4,7 @@ import Admin from "../pages/Admin";
 import Authentication from "../pages/Authentication";
 import Home from "../pages/Home";
 import Packages from "../pages/Packages";
+import PageNotFound from "../pages/PageNotFound";
 import Payment from "../pages/Payment";
 import Profile from "../pages/Profile";
 import PrivateRoute from "./PrivateRoute";
@@ -82,6 +83,7 @@ const Routers = () => {
           />
         </Route>
       </Route>
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };

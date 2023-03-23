@@ -152,7 +152,7 @@ export const searchByEmail = async (info) => {
 export const searchByFullName = async (info) => {
   try {
     const { data } = await axios.get(
-      `/users/search/fullName?fullName=${info.fullName}&limit=${info.limit}&page=${info.page}`
+      `/users/search/fullName?name=${info.name}&limit=${info.limit}&page=${info.page}`
     );
 
     return {

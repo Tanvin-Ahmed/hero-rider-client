@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import {
   getUserCount,
+  getUserCountByAgeRange,
   getUserCountByEmail,
+  getUserCountByFullName,
+  getUserCountByPhone,
   getUsersInfo,
+  searchByAgeRange,
   searchByEmail,
+  searchByFullName,
+  searchByPhone,
   updateUsersStatus,
 } from "../../apis/usersAPI";
 import Pagination from "../shared/Pagination";
@@ -46,6 +52,48 @@ const UserTable = () => {
 
   const handlePageChange = async (currentPage) => {
     if (searchText.trim()) {
+      if (!isNaN(searchText)) {
+        // phone number
+        const { data, errorMessage } = await searchByPhone({
+          phone: searchText,
+          limit: rows,
+          page: currentPage,
+        });
+        if (errorMessage) return alert(errorMessage);
+        setUserList((user) => [...user, ...data]);
+      } else if (
+        String(searchText)
+          .toLowerCase()
+          .match(
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+          )
+      ) {
+        //   search by email
+        const { data, errorMessage } = await searchByEmail({
+          email: searchText.split("@")[0],
+          limit: rows,
+          page: currentPage,
+        });
+        if (errorMessage) return alert(errorMessage);
+        setUserList((user) => [...user, ...data]);
+      } else {
+        // full name
+        const { data, errorMessage } = await searchByFullName({
+          name: searchText,
+          limit: rows,
+          page: currentPage,
+        });
+        if (errorMessage) return alert(errorMessage);
+        setUserList((user) => [...user, ...data]);
+      }
+    } else if (ageRange.from && ageRange.to) {
+      const { data, errorMessage } = await searchByAgeRange({
+        range: ageRange,
+        limit: rows,
+        page: currentPage,
+      });
+      if (errorMessage) return alert(errorMessage);
+      setUserList((user) => [...user, ...data]);
     } else {
       const { data, errorMessage } = await getUsersInfo(rows, currentPage);
       if (errorMessage) {
@@ -137,8 +185,23 @@ const UserTable = () => {
     e.preventDefault();
 
     setCurrentPage(1);
+
+    if (searchText.trim()) setUserList([]);
+
     if (!isNaN(searchText)) {
       // phone number
+      const { count } = await getUserCountByPhone(searchText);
+      const totalPage = Math.ceil(count / rows);
+      setTotalPages(totalPage);
+      if (totalPage) {
+        const { data, errorMessage } = await searchByPhone({
+          phone: searchText,
+          limit: rows,
+          page: 1,
+        });
+        if (errorMessage) return alert(errorMessage);
+        setUserList(data);
+      }
     } else {
       if (
         String(searchText)
@@ -148,12 +211,12 @@ const UserTable = () => {
           )
       ) {
         //   search by email
-        const { count } = await getUserCountByEmail(searchText);
+        const { count } = await getUserCountByEmail(searchText.split("@")[0]);
         const totalPage = Math.ceil(count / rows);
         setTotalPages(totalPage);
         if (totalPage) {
           const { data, errorMessage } = await searchByEmail({
-            email: searchText,
+            email: searchText.split("@")[0],
             limit: rows,
             page: 1,
           });
@@ -162,12 +225,42 @@ const UserTable = () => {
         }
       } else {
         //   search by full name
+        const { count } = await getUserCountByFullName(searchText);
+        const totalPage = Math.ceil(count / rows);
+        setTotalPages(totalPage);
+        if (totalPage) {
+          const { data, errorMessage } = await searchByFullName({
+            name: searchText,
+            limit: rows,
+            page: 1,
+          });
+          if (errorMessage) return alert(errorMessage);
+          setUserList(data);
+        }
       }
     }
   };
 
-  const handleSearchByAge = (e) => {
+  const handleSearchByAge = async (e) => {
     e.preventDefault();
+
+    setCurrentPage(1);
+    if (!ageRange.from && ageRange.to) return;
+
+    setUserList([]);
+
+    const { count } = await getUserCountByAgeRange(ageRange);
+    const totalPage = Math.ceil(count / rows);
+    setTotalPages(totalPage);
+    if (totalPage) {
+      const { data, errorMessage } = await searchByAgeRange({
+        range: ageRange,
+        limit: rows,
+        page: 1,
+      });
+      if (errorMessage) return alert(errorMessage);
+      setUserList(data);
+    }
   };
 
   return (
